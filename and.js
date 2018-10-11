@@ -11,28 +11,46 @@ module.exports = function (RED) {
         this.topic = n.outputTopic || null;
         this.type = n.gateType || "and";
         this.emitOnlyIfTrue = n.emitOnlyIfTrue || false;
-        node.status({ fill: "blue", shape: "ring", text: "Loading..." });
+        this.result = null;
+
+        //node.status({ fill: "blue", shape: "ring", text: "Loading..." });
 
         this.ruleManager = new RuleManager(RED, node, this.type);
         this.ruleManager.storeRule(this.rules).then((result) => {
-            if (result)
+            /*if (result) {
                 node.status({ fill: "green", shape: "dot", text: "TRUE" });
-            else
+            } else {
                 node.status({ fill: "red", shape: "dot", text: "FALSE" });
+            }
 
-            if (this.emitOnlyIfTrue && result || !this.emitOnlyIfTrue)
-                node.send({ topic: this.topic, payload: null, bool: result })
+            if (this.emitOnlyIfTrue && result || !this.emitOnlyIfTrue) {
+                //node.send({ topic: this.topic, payload: null, bool: result })
+                if (node.result != result) {
+                    node.send({ topic: this.topic, payload: result });
+                    node.result = result;
+                }
+            }*/
         })
+
+        node.status({ fill: "blue", shape: "ring", text: "Ready..." });
 
         this.on('input', function (msg) {
             this.ruleManager.updateState(msg).then((result) => {
-                if (result)
+                if (result) {
                     node.status({ fill: "green", shape: "dot", text: "TRUE" });
-                else
+                } else {
                     node.status({ fill: "red", shape: "dot", text: "FALSE" });
+                }
 
-                if (this.emitOnlyIfTrue && result || !this.emitOnlyIfTrue)
-                    node.send({ topic: this.topic, payload: msg.payload || null, bool: result });
+                if (this.emitOnlyIfTrue && result || !this.emitOnlyIfTrue) {
+                    //node.send({ topic: this.topic, payload: msg.payload || null, bool: result });
+                    if (node.result !== result) {
+                        node.send({ topic: this.topic, payload: result });
+                        node.result = result;
+                    }
+                }
+            }, (reject) => {
+                //console.log('reject = ', reject)
             })
         });
     }
